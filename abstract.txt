@@ -1,0 +1,10 @@
+Quine-McCluskey Procedure for minimization of SOP expression (2-level logic minimization)
+
+-Should work for any number of variables (can have upper limit).
+-generation of primes, and then solving set cover (e.g. branch-and-bound)
+
+Variations/additional items :
+-handling 'dont-care's;
+-minimizing for two functions simultaneously (sharing).
+
+Verifying correctness. (e.g. by truth table) (can use existing package like boolean/PyEDA for verifying correctness)
