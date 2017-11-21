@@ -1,39 +1,50 @@
-from enaml.widgets.api import Window, Label, Field,Form,PushButton
+from enaml.widgets.api import Window, Label,Container, Field,Form,PushButton
+from enaml.layout.api import vertical, horizontal, align, spacer, vbox, hbox
 from enaml.stdlib.fields import IntField
 from basic import *
 
 enamldef functionForm(Form):
     attr function
-    Label:
-        text = 'Number of variables'
-    Field:variableField:
-        text = ''
-    Label:
-        text = 'Ones'
-    Field:mintermsO:
-        text = ''
-    Label:
-        text = 'Dont Cares'
-    Field:mintermsX:
-        text = ''
-    Label:
-        text = 'Prime Implicants'
-    Field:PI:
-        read_only = True
-        text = ''
-    Label:
-        text = 'Function'
-    Field:Expr:
-        read_only = True
-        text = ''
-    PushButton:
-        text = 'Find'
-        clicked ::
-            if variableField.text != '':
-                function.updateVariables([chr(i) for i in range(65,65+int(variableField.text),1)])
-                primes,expression = passValues(function,str(mintermsO.text),str(mintermsX.text))
-                Expr.text = unicode(expression)
-                PI.text = unicode(primes)
+    Container:
+        constraints = [vbox(variableLabel,variableField,mintermsOL,mintermsO,mintermsXL,mintermsX,hbox(Find,spacer,Clear),PIL,PI,ExprL,Expr),]
+        Label:variableLabel:
+            text = 'Number of variables'
+        Field:variableField:
+            text = ''
+        Label:mintermsOL:
+            text = 'Ones'
+        Field:mintermsO:
+            text = ''
+        Label:mintermsXL:
+            text = 'Dont Cares'
+        Field:mintermsX:
+            text = ''
+        Label:PIL:
+            text = 'Prime Implicants'
+        Field:PI:
+            read_only = True
+            text = ''
+        Label:ExprL:
+            text = 'Function'
+        Field:Expr:
+            read_only = True
+            text = ''
+        PushButton:Find:
+            text = 'Find'
+            clicked ::
+                if variableField.text != '':
+                    function.updateVariables([chr(i) for i in range(65,65+int(variableField.text),1)])
+                    primes,expression = passValues(function,str(mintermsO.text),str(mintermsX.text))
+                    Expr.text = unicode(expression)
+                    PI.text = unicode(primes)
+        PushButton:Clear:
+            text = 'Clear'
+            clicked ::
+                variableField.text = ''
+                mintermsO.text = ''
+                mintermsX.text = ''
+                Expr.text = ''
+                PI.text = ''
 
 enamldef functionView(Window):
     initial_size = (500,1000)
