@@ -34,6 +34,11 @@ class QuineMcCluskey:
 		self.numvars = len(variables)
 		self.n_bits = 0         # number of bits (i.e. self.n_bits == len(ones[i]) for every i).
 
+	def updateVariables(self,variables):
+		"""The class constructor"""
+		self.variables = variables	 
+		self.numvars = len(variables)
+		self.n_bits = 0         # number of bits (i.e. self.n_bits == len(ones[i]) for every i).
 
 	def __num2str(self, i):
 		"""
@@ -430,9 +435,9 @@ class QuineMcCluskey:
 				if minterm[0] & 1<<j:
 					and_terms.append(self.variables[j])
 				elif not minterm[1] & 1<<j:
-					and_terms.append('(NOT %s)' % self.variables[j])
-			or_terms.append(parentheses(' AND ', and_terms))
-		return parentheses(' OR ', or_terms)
+					and_terms.append('(!%s)' % self.variables[j])
+			or_terms.append(parentheses(' & ', and_terms))
+		return parentheses(' | ', or_terms)
 
 def bitcount(i):
 	""" Count set bits of the input. """
