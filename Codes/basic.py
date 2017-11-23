@@ -11,8 +11,8 @@ inputs.
 
 Another unique feature of this implementation is the possibility to use the XOR
 and XNOR operators, in addition to the normal AND operator, to minimise the
-terms. This slows down the algorithm, but in some cases it can be a big win in
-terms of complexity of the output.
+term_mins. This slows down the algorithm, but in some cases it can be a big win in
+term_mins of complexity of the output.
 """
 
 from __future__ import print_function
@@ -55,8 +55,8 @@ class QuineMcCluskey:
 
 
 
-	def simplify(self, ones, dc = []):
-		"""Simplify a list of terms.
+	def minimize(self, ones, dc = []):
+		"""Simplify a list of term_mins.
 
 		Args:
 		    ones (list of int): list of integers that describe when the output
@@ -67,7 +67,7 @@ class QuineMcCluskey:
 		    have one or zero in the output.
 
 		Returns:
-		    see: simplify_los.
+		    see: minimize_los.
 
 		Example:
 		    ones = [2, 6, 10, 14]
@@ -83,23 +83,23 @@ class QuineMcCluskey:
 		    This will produce the ouput: ['--^^'].
 		    In other words, x = b1 ^ b0, (bit1 XOR bit0).
 		"""
-		terms = ones + dc
-		if len(terms) == 0:
+		term_mins = ones + dc
+		if len(term_mins) == 0:
 		    return None
 
 		# Calculate the number of bits to use
 		# Needed internally by __num2str()
-		self.n_bits = int(math.ceil(math.log(max(terms) + 1, 2)))
+		self.n_bits = int(math.ceil(math.log(max(term_mins) + 1, 2)))
 
 		# Generate the sets of ones and dontcares
 		ones = set(self.__num2str(i) for i in ones)
 		dc = set(self.__num2str(i) for i in dc)
 
-		return self.simplify_los(ones, dc)
+		return self.minimize_los(ones, dc)
 
 
 
-	def simplify_los(self, ones, dc = []):
+	def minimize_los(self, ones, dc = []):
 		"""The simplification algorithm for a list of string-encoded inputs.
 
 		Args:
@@ -111,7 +111,7 @@ class QuineMcCluskey:
 			combinations.
 
 		Returns:
-			Returns a set of strings which represent the reduced minterms.
+			Returns a set of strings which represent the reduced minterm_mins.
 			'-' don't care: this bit can be either zero or one.
 			'1' the bit must be one.
 			'0' the bit must be zero.
@@ -125,24 +125,24 @@ class QuineMcCluskey:
 		"""
 		self.profile_cmp = 0    # number of comparisons (for profiling)
 
-		terms = ones | dc
-		if len(terms) == 0:
+		term_mins = ones | dc
+		if len(term_mins) == 0:
 			return None
 
 		# Calculate the number of bits to use
-		self.n_bits = max(len(i) for i in terms)
-		if self.n_bits != min(len(i) for i in terms):
+		self.n_bits = max(len(i) for i in term_mins)
+		if self.n_bits != min(len(i) for i in term_mins):
 			return None
 
 		# First step of Quine-McCluskey method : prime implicants
-		prime_implicants = self.__get_prime_implicants(terms)
+		prime_implicants = self.__get_prime_implicants(term_mins)
 		# Convert prime implicants to a proper form (value+mask)
 		prime_implicants = self.__get_prime_tuples(prime_implicants)
 		# Second step of Quine McCluskey method : prime implicant chart and Petrick's Method.
-		final_terms = self.__petricks_method(list(prime_implicants),ones)
-		#print(final_terms)
+		final_term_mins = self.__petricks_method(list(prime_implicants),ones)
+		#print(final_term_mins)
 
-		return list(prime_implicants),final_terms
+		return list(prime_implicants),final_term_mins
 	
 	def __get_prime_tuples(self,primes):
 		prime_tuples = list()
@@ -162,7 +162,7 @@ class QuineMcCluskey:
 		chart.
 
 		primes: the prime implicants that we want to minimize.
-		ones: a list of indices for the minterms for which we want the function to
+		ones: a list of indices for the minterm_mins for which we want the function to
 		evaluate to 1.
 		"""
 		if type(ones[0]) is int:
@@ -204,7 +204,7 @@ class QuineMcCluskey:
 		chart.
 
 		primes: the prime implicants that we want to minimize.
-		ones: a list of indices for the minterms for which we want the function to
+		ones: a list of indices for the minterm_mins for which we want the function to
 		evaluate to 1.
 		"""
 
@@ -217,6 +217,7 @@ class QuineMcCluskey:
 			chart.append(column)
 
 		covers = []
+		print(primes)
 		if len(chart) > 0:
 			covers = [set([i]) for i in chart[0]]
 		for i in xrange(1,len(chart)):
@@ -234,7 +235,8 @@ class QuineMcCluskey:
 					if append:
 						new_covers.append(x)
 			covers = new_covers
-		print(covers)
+		print('Covers:',covers)
+		print('--------------------------------------------------------')
 		min_complexity = 99999999
 		for cover in covers:
 			primes_in_cover = [primes[prime_index] for prime_index in cover]
@@ -245,14 +247,14 @@ class QuineMcCluskey:
 		return result
 
 	
-	def calculate_complexity(self, minterms):
+	def calculate_complexity(self, minterm_mins):
 		"""
 		Calculate the complexity of the given function. The complexity is calculated
 		based on the following rules:
 		A NOT gate adds 1 to the complexity.
 		A n-input AND or OR gate adds n to the complexity.
 
-		minterms: a list of minterms that form the function
+		minterm_mins: a list of minterm_mins that form the function
 
 		returns: an integer that is the complexity of the function
 
@@ -288,11 +290,11 @@ class QuineMcCluskey:
 		17
 		"""
 
-		complexity = len(minterms)
+		complexity = len(minterm_mins)
 		if complexity == 1:
 			complexity = 0
 		mask = (1<<self.numvars)-1
-		for minterm in minterms:
+		for minterm in minterm_mins:
 			masked = ~minterm[1] & mask
 			term_complexity = bitcount(masked)
 			if term_complexity == 1:
@@ -301,15 +303,15 @@ class QuineMcCluskey:
 			complexity += bitcount(~minterm[0] & masked)
 		return complexity
 
-	def __get_prime_implicants(self, terms):
-		"""Simplify the set 'terms'.
+	def __get_prime_implicants(self, term_mins):
+		"""Simplify the set 'term_mins'.
 
 		Args:
-		    terms (set of str): set of strings representing the minterms of
+		    term_mins (set of str): set of strings representing the minterm_mins of
 		    ones and dontcares.
 
 		Returns:
-		    A list of prime implicants. These are the minterms that cannot be
+		    A list of prime implicants. These are the minterm_mins that cannot be
 		    reduced with step 1 of the Quine McCluskey method.
 
 		This is the very first step in the Quine McCluskey algorithm. This
@@ -320,33 +322,33 @@ class QuineMcCluskey:
 		n_groups = self.n_bits + 1
 		marked = set()
 
-		# Group terms into the list groups.
+		# Group term_mins into the list groups.
 		# groups is a list of length n_groups.
-		# Each element of groups is a set of terms with the same number
+		# Each element of groups is a set of term_mins with the same number
 		# of ones.  In other words, each term contained in the set
 		# groups[i] contains exactly i ones.
 		groups = [set() for i in range(n_groups)]
-		for t in terms:
+		for t in term_mins:
 			n_bits = t.count('1')
 			groups[n_bits].add(t)
 
 		done = False
 		while not done:
-		    # Group terms into groups.
+		    # Group term_mins into groups.
 		    # groups is a list of length n_groups.
-		    # Each element of groups is a set of terms with the same
+		    # Each element of groups is a set of term_mins with the same
 		    # number of ones.  In other words, each term contained in the
 		    # set groups[i] contains exactly i ones.
 			groups = dict()
-			for t in terms:
+			for t in term_mins:
 				n_ones = t.count('1')
 				key = n_ones
 				if key not in groups:
 					groups[key] = set()
 				groups[key].add(t)
 
-			terms = set()           # The set of new created terms
-			used = set()            # The set of used terms
+			term_mins = set()           # The set of new created term_mins
+			used = set()            # The set of used term_mins
 
 			# Find prime implicants
 			for key in groups:
@@ -369,9 +371,9 @@ class QuineMcCluskey:
 									t12 = t1[:i] + '-' + t1[i+1:]
 									used.add(t1)
 									used.add(t2)
-									terms.add(t12)
+									term_mins.add(t12)
 
-			# Add the unused terms to the list of marked terms
+			# Add the unused term_mins to the list of marked term_mins
 			for g in list(groups.values()):
 				marked |= g - used
 
@@ -402,7 +404,7 @@ class QuineMcCluskey:
 		The operation performed by this generator function can be seen as the
 		inverse of binary minimisation methonds such as Karnaugh maps, Quine
 		McCluskey or Espresso.  It takes as input a minterm and generates all
-		possible maxterms from it.  Inputs and outputs are strings.
+		possible maxterm_mins from it.  Inputs and outputs are strings.
 
 		Possible input characters:
 		    '0': the bit at this position will always be zero.
@@ -451,18 +453,18 @@ class QuineMcCluskey:
 				direction = -1
 				i = n_bits - 1
 				yield "".join(res)
-	def get_function(self, minterms):
+	def get_function(self, minterm_mins):
 		"""
 		Return in human readable form a sum of products function.
 
-		minterms: a list of minterms that form the function
+		minterm_mins: a list of minterm_mins that form the function
 
 		returns: a string that represents the function using operators AND, OR and
 		NOT.
 		"""
 
-		if isinstance(minterms,str):
-			return minterms
+		if isinstance(minterm_mins,str):
+			return minterm_mins
 
 		def parentheses(glue, array):
 			if len(array) > 1:
@@ -470,16 +472,16 @@ class QuineMcCluskey:
 			else:
 				return glue.join(array)
 
-		or_terms = []
-		for minterm in minterms:
-			and_terms = []
+		or_term_mins = []
+		for minterm in minterm_mins:
+			and_term_mins = []
 			for j in xrange(len(self.variables)):
 				if minterm[0] & 1<<j:
-					and_terms.append(self.variables[j])
+					and_term_mins.append(self.variables[j])
 				elif not minterm[1] & 1<<j:
-					and_terms.append('%s\'' % self.variables[j])
-			or_terms.append(parentheses('.', and_terms))
-		return parentheses('+', or_terms)
+					and_term_mins.append('%s\'' % self.variables[j])
+			or_term_mins.append(parentheses('.', and_term_mins))
+		return parentheses('+', or_term_mins)
 
 def bitcount(i):
 	""" Count set bits of the input. """

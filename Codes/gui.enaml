@@ -13,18 +13,18 @@ enamldef functionForm(Form):
                 closable = False
                 tool_tip = 'Single function'
                 Container:
-                    constraints = [vbox(variableLabel,variableField,mintermsOL,mintermsO,mintermsXL,mintermsX,hbox(Find,spacer,Clear),PIL,PI,ExprL,Expr),]
+                    constraints = [vbox(variableLabel,variableField,minterm_minsOL,minterm_minsO,minterm_minsXL,minterm_minsX,hbox(Find,spacer,Clear),PIL,PI,ExprL,Expr),]
                     Label:variableLabel:
                         text = 'Number of variables'
                     Field:variableField:
                         text = ''
-                    Label:mintermsOL:
+                    Label:minterm_minsOL:
                         text = 'Ones'
-                    Field:mintermsO:
+                    Field:minterm_minsO:
                         text = ''
-                    Label:mintermsXL:
+                    Label:minterm_minsXL:
                         text = 'Dont Cares'
-                    Field:mintermsX:
+                    Field:minterm_minsX:
                         text = ''
                     Label:PIL:
                         text = 'Prime Implicants'
@@ -41,15 +41,15 @@ enamldef functionForm(Form):
                         clicked ::
                             if variableField.text != '':
                                 function.updateVariables([chr(i) for i in range(65+int(variableField.text)-1,64,-1)])
-                                primes,expression = passValues(function,str(mintermsO.text),str(mintermsX.text))
+                                primes,expression = passValues(function,str(minterm_minsO.text),str(minterm_minsX.text))
                                 Expr.text = unicode(expression)
                                 PI.text = unicode(primes)
                     PushButton:Clear:
                         text = 'Clear'
                         clicked ::
                             variableField.text = ''
-                            mintermsO.text = ''
-                            mintermsX.text = ''
+                            minterm_minsO.text = ''
+                            minterm_minsX.text = ''
                             Expr.text = ''
                             PI.text = ''
             Page:second:
@@ -57,26 +57,26 @@ enamldef functionForm(Form):
                 closable = False
                 tool_tip = 'Two functions'
                 Container:
-                    constraints = [vbox(variableLabel2,variableField2,mintermsOL1,mintermsO1,mintermsOL2,mintermsO2,mintermsXL1,mintermsX1,mintermsXL2,mintermsX2,hbox(Find2,spacer,Clear2),ExprL1,Expr1,ExprL2,Expr2),]
+                    constraints = [vbox(variableLabel2,variableField2,minterm_minsOL1,minterm_minsO1,minterm_minsOL2,minterm_minsO2,minterm_minsXL1,minterm_minsX1,minterm_minsXL2,minterm_minsX2,hbox(Find2,spacer,Clear2),ExprL1,Expr1,ExprL2,Expr2),]
                     Label:variableLabel2:
                         text = 'Number of variables'
                     Field:variableField2:
                         text = ''
-                    Label:mintermsOL1:
-                        text = 'Minterms of function 1'
-                    Field:mintermsO1:
+                    Label:minterm_minsOL1:
+                        text = 'Minterm_mins of function 1'
+                    Field:minterm_minsO1:
                         text = ''
-                    Label:mintermsXL1:
+                    Label:minterm_minsXL1:
                         text = 'Dont Cares of function 1'
-                    Field:mintermsX1:
+                    Field:minterm_minsX1:
                         text = ''
-                    Label:mintermsOL2:
-                        text = 'Minterms of function 2'
-                    Field:mintermsO2:
+                    Label:minterm_minsOL2:
+                        text = 'Minterm_mins of function 2'
+                    Field:minterm_minsO2:
                         text = ''
-                    Label:mintermsXL2:
+                    Label:minterm_minsXL2:
                         text = 'Dont Cares of function 2'
-                    Field:mintermsX2:
+                    Field:minterm_minsX2:
                         text = ''
                     Label:ExprL1:
                         text = 'Function 1'
@@ -93,8 +93,8 @@ enamldef functionForm(Form):
                         clicked ::
                             if variableField2.text != '':
                                 function.updateVariables([chr(i) for i in range(65+int(variableField2.text)-1,64,-1)])
-                                prime_implicants1,covers1 = DpassValues(function,str(mintermsO1.text),str(mintermsX1.text))
-                                prime_implicants2,covers2 = DpassValues(function,str(mintermsO2.text),str(mintermsX2.text))
+                                prime_implicants1,covers1 = DpassValues(function,str(minterm_minsO1.text),str(minterm_minsX1.text))
+                                prime_implicants2,covers2 = DpassValues(function,str(minterm_minsO2.text),str(minterm_minsX2.text))
                                 min_complexity = 99999999
                                 for cover1 in covers1:
                                     for cover2 in covers2:
@@ -112,11 +112,11 @@ enamldef functionForm(Form):
                         text = 'Clear'
                         clicked ::
                             variableField2.text = ''
-                            mintermsO2.text = ''
-                            mintermsX2.text = ''
+                            minterm_minsO2.text = ''
+                            minterm_minsX2.text = ''
                             Expr2.text = ''
-                            mintermsO1.text = ''
-                            mintermsX1.text = ''
+                            minterm_minsO1.text = ''
+                            minterm_minsX1.text = ''
                             Expr1.text = ''
 
 
@@ -131,17 +131,15 @@ enamldef functionView(Window):
 def passValues(function,ones,dc):
     ones = [int(i) for i in ones.strip().replace(',',' ').split()]
     dc = [int(i) for i in dc.strip().replace(',',' ').split()]
-    _,primes = function.simplify(ones, dc)  
+    _,primes = function.minimize(ones, dc)  
     expression = function.get_function(primes)
     primes = ",".join("(%s,%s)" % tup for tup in primes)
-    print expression
-    print primes
     return primes,expression
 
 def DpassValues(function,ones,dc):
     ones = [int(i) for i in ones.strip().replace(',',' ').split()]
     dc = [int(i) for i in dc.strip().replace(',',' ').split()]
-    primes,_ = function.simplify(ones, dc)  
+    primes,_ = function.minimize(ones, dc)  
     covers = function.possible_covers(list(primes),ones)
     return primes,covers
 
