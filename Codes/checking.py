@@ -55,7 +55,7 @@ class QuineMcCluskey:
 
 
 
-	def simplify(self, ones, dc = []):
+	def simplify(self, ones, dc,functionValues):
 		"""Simplify a list of terms.
 
 		Args:
@@ -95,11 +95,11 @@ class QuineMcCluskey:
 		ones = set(self.__num2str(i) for i in ones)
 		dc = set(self.__num2str(i) for i in dc)
 
-		return self.simplify_los(ones, dc)
+		return self.simplify_los(ones, dc,functionValues)
 
 
 
-	def simplify_los(self, ones, dc = []):
+	def simplify_los(self, ones, dc,functionValues):
 		"""The simplification algorithm for a list of string-encoded inputs.
 
 		Args:
@@ -135,22 +135,15 @@ class QuineMcCluskey:
 			return None
 
 		# First step of Quine-McCluskey method : prime implicants
-		prime_implicants = self.__get_prime_implicants(terms)
-		# Convert prime implicants to a proper form (value+mask)
-		prime_implicants = self.__get_prime_tuples(prime_implicants)
-		# Second step of Quine McCluskey method : prime implicant chart and Petrick's Method.
-		final_terms = self.__petricks_method(list(prime_implicants),ones)
-		#print(final_terms)
-
-		return list(prime_implicants),final_terms
+		prime_implicants,functionValues = self.__get_prime_implicants(terms,functionValues)
+		return prime_implicants,functionValues
 	
-	def __get_prime_tuples(self,primes):
+	def get_prime_tuples(self,primes):
 		prime_tuples = list()
 		for prime in primes:
 			value = int(prime.replace('-','0'),2)
 			mask = int(prime.replace('1','0').replace('-','1'),2)
 			prime_tuples.append((value,mask))
-		prime_tuples = set(prime_tuples)
 		return prime_tuples
 
 	def possible_covers(self, primes, ones):
@@ -195,7 +188,7 @@ class QuineMcCluskey:
 			covers = new_covers
 		return covers
 
-	def __petricks_method(self, primes, ones):
+	def petricks_method(self, primes, ones):
 		"""
 		Use the prime implicants to find the essential prime implicants of the
 		function, as well as other prime implicants that are necessary to cover
@@ -207,7 +200,8 @@ class QuineMcCluskey:
 		ones: a list of indices for the minterms for which we want the function to
 		evaluate to 1.
 		"""
-
+		if type(ones[0]) is int:
+			ones = set(self.__num2str(i) for i in ones)
 		chart = []
 		for one in ones:
 			column = []
@@ -234,15 +228,15 @@ class QuineMcCluskey:
 					if append:
 						new_covers.append(x)
 			covers = new_covers
-		print(covers)
 		min_complexity = 99999999
+		print(covers)
 		for cover in covers:
 			primes_in_cover = [primes[prime_index] for prime_index in cover]
 			complexity = self.calculate_complexity(primes_in_cover)
 			if complexity < min_complexity:
 				min_complexity = complexity
 				result = primes_in_cover
-		return result
+		return min_complexity,result
 
 	
 	def calculate_complexity(self, minterms):
@@ -301,7 +295,7 @@ class QuineMcCluskey:
 			complexity += bitcount(~minterm[0] & masked)
 		return complexity
 
-	def __get_prime_implicants(self, terms):
+	def __get_prime_implicants(self, terms,functionValues):
 		"""Simplify the set 'terms'.
 
 		Args:
@@ -319,18 +313,24 @@ class QuineMcCluskey:
 		# Sort and remove duplicates.
 		n_groups = self.n_bits + 1
 		marked = set()
+		terms = [(i,) for i in terms]
 
 		# Group terms into the list groups.
 		# groups is a list of length n_groups.
 		# Each element of groups is a set of terms with the same number
 		# of ones.  In other words, each term contained in the set
 		# groups[i] contains exactly i ones.
+		tuple_conv = {}
+		tuple_inv = {}
 		groups = [set() for i in range(n_groups)]
 		for t in terms:
-			n_bits = t.count('1')
+			tuple_conv[t] = t[0]
+			tuple_inv[t[0]] = t
+			n_bits = tuple_conv[t].count('1')
 			groups[n_bits].add(t)
 
 		done = False
+
 		while not done:
 		    # Group terms into groups.
 		    # groups is a list of length n_groups.
@@ -338,14 +338,15 @@ class QuineMcCluskey:
 		    # number of ones.  In other words, each term contained in the
 		    # set groups[i] contains exactly i ones.
 			groups = dict()
-			for t in terms:
+			for k in terms:
+				t = tuple_conv[k]
 				n_ones = t.count('1')
 				key = n_ones
 				if key not in groups:
 					groups[key] = set()
-				groups[key].add(t)
+				groups[key].add(k)
 
-			terms = set()           # The set of new created terms
+			terms = set()# The set of new created terms
 			used = set()            # The set of used terms
 
 			# Find prime implicants
@@ -353,7 +354,7 @@ class QuineMcCluskey:
 				key_next = key+1
 				if key_next in groups:
 					group_next = groups[key_next]
-					for t1 in groups[key]:
+					for k1 in groups[key]:
 						# Optimisation:
 						# The Quine-McCluskey algorithm compares t1 with
 						# each element of the next group. (Normal approach)
@@ -361,28 +362,36 @@ class QuineMcCluskey:
 						# possible permutations of t1 by adding a '1' in
 						# opportune positions and check if this new term is
 						# contained in the set groups[key_next].
+						t1 = tuple_conv[k1]
 						for i, c1 in enumerate(t1):
 							if c1 == '0':
 								self.profile_cmp += 1
 								t2 = t1[:i] + '1' + t1[i+1:]
-								if t2 in group_next:
+								k2 = tuple_inv[t2]
+								if k2 in group_next:
+									k12 = k1+k2
 									t12 = t1[:i] + '-' + t1[i+1:]
-									used.add(t1)
-									used.add(t2)
-									terms.add(t12)
+									tuple_conv[k12] = t12
+									tuple_inv[t12] = k12
+									andValue=functionValues[t1] & functionValues[t2]
+									if (andValue > 0):
+										used.add(k1)
+										used.add(k2)
+										terms.add(k12)
+										functionValues[t12] = andValue					
 
 			# Add the unused terms to the list of marked terms
 			for g in list(groups.values()):
 				marked |= g - used
-
 			if len(used) == 0:
 				done = True
-
 		# Prepare the list of prime implicants
 		pi = marked
 		for g in list(groups.values()):
 			pi |= g
-		return pi
+		pi = set([tuple_conv[i] for i in pi])
+
+		return pi,functionValues
 
 	def permutations(self, value = ''):
 		"""Iterator to generate all possible values out of a string.
@@ -488,3 +497,42 @@ def bitcount(i):
 		res += i&1
 		i>>=1
 	return res
+
+n = 4
+qm = QuineMcCluskey(['A','B','C','D'])
+ones1 = [8,4,9,10,11,12,14,15]
+ones2 = [6,7]
+ones = list(set(ones1+ones2))
+ones.sort()
+functionValues = {}
+for one in ones:
+	i = '1' if one in ones1 else '0'
+	i += '1' if one in ones2 else '0'
+	functionValues[bin(one)[2:].zfill(n)] = int(i,base=2)
+dontcares = []
+prime_implicants,functionValues = qm.simplify(ones, dontcares,functionValues)
+print(prime_implicants)
+print(functionValues)
+prime_implicants1 = [i for i in prime_implicants if (functionValues[i] > 1)]
+prime_implicants2 = [i for i in prime_implicants if (functionValues[i] !=2)]
+print(prime_implicants1)
+print(prime_implicants2)
+# Convert prime implicants to a proper form (value+mask)
+prime_implicants1 = qm.get_prime_tuples(prime_implicants1)
+covers1 = qm.possible_covers(list(prime_implicants1),ones1)
+prime_implicants2 = qm.get_prime_tuples(prime_implicants2)
+covers2 = qm.possible_covers(list(prime_implicants2),ones2)	
+
+result = []
+min_complexity = 99999999
+for cover1 in covers1:
+	for cover2 in covers2:
+			implicant1 = [prime_implicants1[i] for i in list(cover1)]
+			implicant2 = [prime_implicants2[i] for i in list(cover2)]
+			cover = list(set().union(implicant1,implicant2))
+			complexity = qm.calculate_complexity(cover)
+			print(cover)
+			if complexity < min_complexity:
+				min_complexity = complexity
+				result = cover
+print(min_complexity,result)

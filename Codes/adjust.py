@@ -138,11 +138,7 @@ class QuineMcCluskey:
 		prime_implicants = self.__get_prime_implicants(terms)
 		# Convert prime implicants to a proper form (value+mask)
 		prime_implicants = self.__get_prime_tuples(prime_implicants)
-		# Second step of Quine McCluskey method : prime implicant chart and Petrick's Method.
-		final_terms = self.__petricks_method(list(prime_implicants),ones)
-		#print(final_terms)
-
-		return list(prime_implicants),final_terms
+		return prime_implicants
 	
 	def __get_prime_tuples(self,primes):
 		prime_tuples = list()
@@ -195,7 +191,7 @@ class QuineMcCluskey:
 			covers = new_covers
 		return covers
 
-	def __petricks_method(self, primes, ones):
+	def petricks_method(self, primes, ones):
 		"""
 		Use the prime implicants to find the essential prime implicants of the
 		function, as well as other prime implicants that are necessary to cover
@@ -234,7 +230,7 @@ class QuineMcCluskey:
 					if append:
 						new_covers.append(x)
 			covers = new_covers
-		print(covers)
+
 		min_complexity = 99999999
 		for cover in covers:
 			primes_in_cover = [primes[prime_index] for prime_index in cover]
@@ -242,7 +238,7 @@ class QuineMcCluskey:
 			if complexity < min_complexity:
 				min_complexity = complexity
 				result = primes_in_cover
-		return result
+		return min_complexity,result
 
 	
 	def calculate_complexity(self, minterms):
@@ -488,3 +484,31 @@ def bitcount(i):
 		res += i&1
 		i>>=1
 	return res
+
+qm = QuineMcCluskey(['A','B','C'])
+ones1 = [2,3,4,5,6,7]
+ones2 = [0,1,2,3,4,5]
+
+# Convert prime implicants to a proper form (value+mask)
+prime_implicants1 = list(qm.simplify(ones1,[]))
+covers1 = qm.possible_covers(prime_implicants1,ones1)
+prime_implicants2 = list(qm.simplify(ones2,[]))
+covers2 = qm.possible_covers(prime_implicants2,ones2)	
+
+min_complexity = 99999999
+for cover1 in covers1:
+	for cover2 in covers2:
+			implicant1 = [prime_implicants1[i] for i in list(cover1)]
+			implicant2 = [prime_implicants2[i] for i in list(cover2)]
+			cover = list(set().union(implicant1,implicant2))
+			complexity = qm.calculate_complexity(cover)
+			print(cover)
+			if complexity < min_complexity:
+				min_complexity = complexity
+				result = cover
+print(min_complexity,result)
+'''
+		# Second step of Quine McCluskey method : prime implicant chart and Petrick's Method.
+		final_terms = qm.petricks_method(list(prime_implicants),ones)
+		#print(final_terms)
+'''
