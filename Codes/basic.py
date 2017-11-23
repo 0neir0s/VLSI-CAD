@@ -33,9 +33,11 @@ class QuineMcCluskey:
 
 		# Calculate the number of bits to use
 		self.n_bits = int(math.ceil(math.log(max(term_mins) + 1, 2)))
-
+		if(term_mins == [0]):
+			self.n_bits = 1
 		# Generate the sets of ones and dontcares
 		ones = set(self.__num2str(i) for i in ones)
+		print(ones)
 		dc = set(self.__num2str(i) for i in dc)
 
 		return self.minimize_los(ones, dc)
@@ -45,7 +47,6 @@ class QuineMcCluskey:
 	def minimize_los(self, ones, dc = []):
 		"""The main algorithm takes place here"""
 		self.global_prof = 0   
-
 		term_mins = ones | dc
 		if len(term_mins) == 0:
 			return None
@@ -54,10 +55,9 @@ class QuineMcCluskey:
 		self.n_bits = max(len(i) for i in term_mins)
 		if self.n_bits != min(len(i) for i in term_mins):
 			return None
-
 		# First step of Quine-McCluskey method : prime implicants
 		prime_implicants = self.__find_PI(term_mins)
-		print(prime_implicants)
+		#print(prime_implicants)
 		# Convert prime implicants to a proper form (value+mask)
 		prime_implicants = self.__get_prime_tuples(prime_implicants)
 		# Second step of Quine McCluskey method : prime implicant chart and Petrick's Method.
@@ -66,9 +66,7 @@ class QuineMcCluskey:
 	
 	def __get_prime_tuples(self,primes):
 		prime_tuples = list()
-		print(primes)
-		for prime in primes:
-			
+		for prime in primes:			
 			value = int(prime.replace('-','0'),2)
 			mask = int(prime.replace('1','0').replace('-','1'),2)
 			prime_tuples.append((value,mask))
@@ -129,7 +127,6 @@ class QuineMcCluskey:
 			chart.append(column)
 
 		covers = []
-		print(primes)
 		if len(chart) > 0:
 			covers = [set([i]) for i in chart[0]]
 		for i in xrange(1,len(chart)):
@@ -184,7 +181,7 @@ class QuineMcCluskey:
 		"""
 		n_groups = self.n_bits + 1
 		marked = set()
-
+		#print(term_mins)
 		# Group term_mins into the list groups.
 		groups = [set() for i in range(n_groups)]
 		for t in term_mins:
@@ -201,7 +198,6 @@ class QuineMcCluskey:
 				if key not in groups:
 					groups[key] = set()
 				groups[key].add(t)
-
 			term_mins = set()           # The set of new created term_mins
 			used = set()            # The set of used term_mins
 
