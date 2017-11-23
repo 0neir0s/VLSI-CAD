@@ -95,19 +95,19 @@ enamldef functionForm(Form):
                                 function.updateVariables([chr(i) for i in range(65+int(variableField2.text)-1,64,-1)])
                                 prime_implicants1,covers1 = DpassValues(function,str(minterm_minsO1.text),str(minterm_minsX1.text))
                                 prime_implicants2,covers2 = DpassValues(function,str(minterm_minsO2.text),str(minterm_minsX2.text))
-                                min_complexity = 99999999
+                                min_cost = 99999999
                                 for cover1 in covers1:
                                     for cover2 in covers2:
                                             implicant1 = [prime_implicants1[i] for i in list(cover1)]
                                             implicant2 = [prime_implicants2[i] for i in list(cover2)]
                                             cover = list(set().union(implicant1,implicant2))
-                                            complexity = function.calculate_complexity(cover)
-                                            if (complexity < min_complexity):
-                                                min_complexity = complexity
+                                            cost = function.calculate_cost(cover)
+                                            if (cost < min_cost):
+                                                min_cost = cost
                                                 result1 = implicant1
                                                 result2 = implicant2                                  
-                            Expr1.text = unicode(function.get_function(result1))
-                            Expr2.text = unicode(function.get_function(result2))
+                            Expr1.text = unicode(function.readable_format(result1))
+                            Expr2.text = unicode(function.readable_format(result2))
                     PushButton:Clear2:
                         text = 'Clear'
                         clicked ::
@@ -132,7 +132,7 @@ def passValues(function,ones,dc):
     ones = [int(i) for i in ones.strip().replace(',',' ').split()]
     dc = [int(i) for i in dc.strip().replace(',',' ').split()]
     _,primes = function.minimize(ones, dc)  
-    expression = function.get_function(primes)
+    expression = function.readable_format(primes)
     primes = ",".join("(%s,%s)" % tup for tup in primes)
     return primes,expression
 

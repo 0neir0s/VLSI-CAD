@@ -1,94 +1,37 @@
 #!/usr/bin/env python
 
-"""An implementation of the Quine McCluskey algorithm.
-
-This implementation of the Quine McCluskey algorithm has no inherent limits
-(other than the calculation time) on the size of the inputs.
-
-Also, in the limited tests of the author of this module, this implementation is
-considerably faster than other public Python implementations for non-trivial
-inputs.
-
-Another unique feature of this implementation is the possibility to use the XOR
-and XNOR operators, in addition to the normal AND operator, to minimise the
-term_mins. This slows down the algorithm, but in some cases it can be a big win in
-term_mins of complexity of the output.
-"""
-
+"Library code"
 from __future__ import print_function
 import math
 
+
 class QuineMcCluskey:
-	"""The Quine McCluskey class.
-
-	The QuineMcCluskey class minimises boolean functions using the Quine
-	McCluskey algorithm.
-
-	If the class was instantiiated with the use_xor set to True, then the
-	resulting boolean function may contain XOR and XNOR operators.
-	"""
-
 	def __init__(self,variables):
 		"""The class constructor"""
 		self.variables = variables	 
 		self.numvars = len(variables)
-		self.n_bits = 0         # number of bits (i.e. self.n_bits == len(ones[i]) for every i).
+		self.n_bits = 0         
 
 	def updateVariables(self,variables):
 		"""The class constructor"""
 		self.variables = variables	 
 		self.numvars = len(variables)
-		self.n_bits = 0         # number of bits (i.e. self.n_bits == len(ones[i]) for every i).
+		self.n_bits = 0         
 
 	def __num2str(self, i):
-		"""
-		Convert an integer to its bit-representation in a string.
-
-		Args:
-		    i (int): the number to convert.
-
-		Returns:
-		    The binary string representation of the parameter i.
-		"""
+		"""Convert an integer to its bit-representation in a string"""
 		x = ['1' if i & (1 << k) else '0' for k in range(self.n_bits - 1, -1, -1)]
 		return "".join(x)
 
 
 
 	def minimize(self, ones, dc = []):
-		"""Simplify a list of term_mins.
-
-		Args:
-		    ones (list of int): list of integers that describe when the output
-		    function is '1', e.g. [1, 2, 6, 8, 15].
-
-		Kwargs:
-		    dc (list of int): list of numbers for which we don't care if they
-		    have one or zero in the output.
-
-		Returns:
-		    see: minimize_los.
-
-		Example:
-		    ones = [2, 6, 10, 14]
-		    dc = []
-
-		    This will produce the ouput: ['--10']
-		    This means x = b1 & ~b0, (bit1 AND NOT bit0)
-
-		Example:
-		    ones = [1, 2, 5, 6, 9, 10, 13, 14]
-		    dc = []
-
-		    This will produce the ouput: ['--^^'].
-		    In other words, x = b1 ^ b0, (bit1 XOR bit0).
-		"""
+		"""Simplify a list of term_mins"""
 		term_mins = ones + dc
 		if len(term_mins) == 0:
 		    return None
 
 		# Calculate the number of bits to use
-		# Needed internally by __num2str()
 		self.n_bits = int(math.ceil(math.log(max(term_mins) + 1, 2)))
 
 		# Generate the sets of ones and dontcares
@@ -100,30 +43,8 @@ class QuineMcCluskey:
 
 
 	def minimize_los(self, ones, dc = []):
-		"""The simplification algorithm for a list of string-encoded inputs.
-
-		Args:
-			ones (list of str): list of strings that describe when the output
-			function is '1', e.g. ['0001', '0010', '0110', '1000', '1111'].
-
-		Kwargs:
-			dc: (list of str)set of strings that define the don't care
-			combinations.
-
-		Returns:
-			Returns a set of strings which represent the reduced minterm_mins.
-			'-' don't care: this bit can be either zero or one.
-			'1' the bit must be one.
-			'0' the bit must be zero.
-
-		Example:
-			ones = ['0010', '0110', '1010', '1110']
-			dc = []
-
-			This will produce the ouput: ['--10'].
-			In other words, x = b1 & ~b0, (bit1 AND NOT bit0).
-		"""
-		self.profile_cmp = 0    # number of comparisons (for profiling)
+		"""The main algorithm takes place here"""
+		self.global_prof = 0   
 
 		term_mins = ones | dc
 		if len(term_mins) == 0:
@@ -135,18 +56,19 @@ class QuineMcCluskey:
 			return None
 
 		# First step of Quine-McCluskey method : prime implicants
-		prime_implicants = self.__get_prime_implicants(term_mins)
+		prime_implicants = self.__find_PI(term_mins)
+		print(prime_implicants)
 		# Convert prime implicants to a proper form (value+mask)
 		prime_implicants = self.__get_prime_tuples(prime_implicants)
 		# Second step of Quine McCluskey method : prime implicant chart and Petrick's Method.
 		final_term_mins = self.__petricks_method(list(prime_implicants),ones)
-		#print(final_term_mins)
-
 		return list(prime_implicants),final_term_mins
 	
 	def __get_prime_tuples(self,primes):
 		prime_tuples = list()
+		print(primes)
 		for prime in primes:
+			
 			value = int(prime.replace('-','0'),2)
 			mask = int(prime.replace('1','0').replace('-','1'),2)
 			prime_tuples.append((value,mask))
@@ -196,17 +118,7 @@ class QuineMcCluskey:
 		return covers
 
 	def __petricks_method(self, primes, ones):
-		"""
-		Use the prime implicants to find the essential prime implicants of the
-		function, as well as other prime implicants that are necessary to cover
-		the function. This method uses the Petrick's method, which is a technique
-		for determining all minimum sum-of-products solutions from a prime implicant
-		chart.
-
-		primes: the prime implicants that we want to minimize.
-		ones: a list of indices for the minterm_mins for which we want the function to
-		evaluate to 1.
-		"""
+		"""Find the essential prime implicants"""
 
 		chart = []
 		for one in ones:
@@ -237,96 +149,43 @@ class QuineMcCluskey:
 			covers = new_covers
 		print('Covers:',covers)
 		print('--------------------------------------------------------')
-		min_complexity = 99999999
+		min_cost = 99999999
 		for cover in covers:
 			primes_in_cover = [primes[prime_index] for prime_index in cover]
-			complexity = self.calculate_complexity(primes_in_cover)
-			if complexity < min_complexity:
-				min_complexity = complexity
+			cost = self.calculate_cost(primes_in_cover)
+			if cost < min_cost:
+				min_cost = cost
 				result = primes_in_cover
 		return result
 
 	
-	def calculate_complexity(self, minterm_mins):
+	def calculate_cost(self, minterm_mins):
 		"""
-		Calculate the complexity of the given function. The complexity is calculated
-		based on the following rules:
-		A NOT gate adds 1 to the complexity.
-		A n-input AND or OR gate adds n to the complexity.
-
-		minterm_mins: a list of minterm_mins that form the function
-
-		returns: an integer that is the complexity of the function
-
-		>>> qm = QM(['A','B','C'])
-
-		>>> qm.calculate_complexity([(1,6)])
-		0
-		>>> qm.calculate_complexity([(0,6)])
-		1
-		>>> qm.calculate_complexity([(3,4)])
-		2
-		>>> qm.calculate_complexity([(7,0)])
-		3
-		>>> qm.calculate_complexity([(1,6),(2,5),(4,3)])
-		3
-		>>> qm.calculate_complexity([(0,6),(2,5),(4,3)])
-		4
-		>>> qm.calculate_complexity([(0,6),(0,5),(4,3)])
-		5
-		>>> qm.calculate_complexity([(0,6),(0,5),(0,3)])
-		6
-		>>> qm.calculate_complexity([(3,4),(7,0),(5,2)])
-		10
-		>>> qm.calculate_complexity([(1,4),(7,0),(5,2)])
-		11
-		>>> qm.calculate_complexity([(2,4),(7,0),(5,2)])
-		11
-		>>> qm.calculate_complexity([(0,4),(7,0),(5,2)])
-		12
-		>>> qm.calculate_complexity([(0,4),(0,0),(5,2)])
-		15
-		>>> qm.calculate_complexity([(0,4),(0,0),(0,2)])
-		17
+		A NOT gate adds 1 to the cost.
+		AND or OR gate adds 2 to the cost.
 		"""
 
-		complexity = len(minterm_mins)
-		if complexity == 1:
-			complexity = 0
+		cost = len(minterm_mins)
+		if cost == 1:
+			cost = 0
 		mask = (1<<self.numvars)-1
 		for minterm in minterm_mins:
 			masked = ~minterm[1] & mask
-			term_complexity = bitcount(masked)
-			if term_complexity == 1:
-				term_complexity = 0
-			complexity += term_complexity
-			complexity += bitcount(~minterm[0] & masked)
-		return complexity
+			term_cost = no_of_bits(masked)
+			if term_cost == 1:
+				term_cost = 0
+			cost += term_cost
+			cost += no_of_bits(~minterm[0] & masked)
+		return cost
 
-	def __get_prime_implicants(self, term_mins):
-		"""Simplify the set 'term_mins'.
-
-		Args:
-		    term_mins (set of str): set of strings representing the minterm_mins of
-		    ones and dontcares.
-
-		Returns:
-		    A list of prime implicants. These are the minterm_mins that cannot be
-		    reduced with step 1 of the Quine McCluskey method.
-
-		This is the very first step in the Quine McCluskey algorithm. This
-		generates all prime implicants, whether they are redundant or not.
+	def __find_PI(self, term_mins):
 		"""
-
-		# Sort and remove duplicates.
+		Returns prime implicants
+		"""
 		n_groups = self.n_bits + 1
 		marked = set()
 
 		# Group term_mins into the list groups.
-		# groups is a list of length n_groups.
-		# Each element of groups is a set of term_mins with the same number
-		# of ones.  In other words, each term contained in the set
-		# groups[i] contains exactly i ones.
 		groups = [set() for i in range(n_groups)]
 		for t in term_mins:
 			n_bits = t.count('1')
@@ -335,10 +194,6 @@ class QuineMcCluskey:
 		done = False
 		while not done:
 		    # Group term_mins into groups.
-		    # groups is a list of length n_groups.
-		    # Each element of groups is a set of term_mins with the same
-		    # number of ones.  In other words, each term contained in the
-		    # set groups[i] contains exactly i ones.
 			groups = dict()
 			for t in term_mins:
 				n_ones = t.count('1')
@@ -356,16 +211,9 @@ class QuineMcCluskey:
 				if key_next in groups:
 					group_next = groups[key_next]
 					for t1 in groups[key]:
-						# Optimisation:
-						# The Quine-McCluskey algorithm compares t1 with
-						# each element of the next group. (Normal approach)
-						# But in reality it is faster to construct all
-						# possible permutations of t1 by adding a '1' in
-						# opportune positions and check if this new term is
-						# contained in the set groups[key_next].
 						for i, c1 in enumerate(t1):
 							if c1 == '0':
-								self.profile_cmp += 1
+								self.global_prof += 1
 								t2 = t1[:i] + '1' + t1[i+1:]
 								if t2 in group_next:
 									t12 = t1[:i] + '-' + t1[i+1:]
@@ -386,81 +234,9 @@ class QuineMcCluskey:
 			pi |= g
 		return pi
 
-	def permutations(self, value = ''):
-		"""Iterator to generate all possible values out of a string.
-
-		Args:
-		    value (str): A string containing any of the above characters.
-
-		Returns:
-		    The output strings contain only '0' and '1'.
-
-		Example:
-		    from qm import QuineMcCluskey
-		    qm = QuineMcCluskey()
-		    for i in qm.permutations('1--^^'):
-		        print(i)
-
-		The operation performed by this generator function can be seen as the
-		inverse of binary minimisation methonds such as Karnaugh maps, Quine
-		McCluskey or Espresso.  It takes as input a minterm and generates all
-		possible maxterm_mins from it.  Inputs and outputs are strings.
-
-		Possible input characters:
-		    '0': the bit at this position will always be zero.
-		    '1': the bit at this position will always be one.
-		    '-': don't care: this bit can be zero or one.
-
-		Algorithm description:
-		    This lovely piece of spaghetti code generates all possibe
-		    permutations of a given string describing logic operations.
-		    This could be achieved by recursively running through all
-		    possibilities, but a more linear approach has been preferred.
-		    The basic idea of this algorithm is to consider all bit
-		    positions from 0 upwards (direction = +1) until the last bit
-		    position. When the last bit position has been reached, then the
-		    generated string is yielded.  At this point the algorithm works
-		    its way backward (direction = -1) until it finds an operator
-		    like '-', '^' or '~'.  The bit at this position is then flipped
-		    (generally from '0' to '1') and the direction flag again
-		    inverted. This way the bit position pointer (i) runs forth and
-		    back several times until all possible permutations have been
-		    generated.
-		    When the position pointer reaches position -1, all possible
-		    combinations have been visited.
+	def readable_format(self, minterm_mins):
 		"""
-		n_bits = len(value)
-		res = ['0' for i in range(n_bits)]
-		i = 0
-		direction = +1
-		while i >= 0:
-			# binary constant
-			if value[i] == '0' or value[i] == '1':
-				res[i] = value[i]
-			# dontcare operator
-			elif value[i] == '-':
-				if direction == +1:
-					res[i] = '0'
-				elif res[i] == '0':
-					res[i] = '1'
-					direction = +1
-			# unknown input
-			else:
-				res[i] = '#'
-
-			i = i + direction
-			if i == n_bits:
-				direction = -1
-				i = n_bits - 1
-				yield "".join(res)
-	def get_function(self, minterm_mins):
-		"""
-		Return in human readable form a sum of products function.
-
-		minterm_mins: a list of minterm_mins that form the function
-
-		returns: a string that represents the function using operators AND, OR and
-		NOT.
+		function in readable form given the essential prime implicants as the inputs
 		"""
 
 		if isinstance(minterm_mins,str):
@@ -483,7 +259,7 @@ class QuineMcCluskey:
 			or_term_mins.append(parentheses('.', and_term_mins))
 		return parentheses('+', or_term_mins)
 
-def bitcount(i):
+def no_of_bits(i):
 	""" Count set bits of the input. """
 	res = 0
 	while i > 0:
