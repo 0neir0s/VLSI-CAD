@@ -107,7 +107,7 @@ enamldef functionForm(Form):
                                                 result1 = implicant1
                                                 result2 = implicant2                                  
                             Expr1.text = unicode(function.get_function(result1))
-                            Expr2.text = unicode(function.get_function(result1))
+                            Expr2.text = unicode(function.get_function(result2))
                     PushButton:Clear2:
                         text = 'Clear'
                         clicked ::
@@ -131,7 +131,7 @@ enamldef functionView(Window):
 def passValues(function,ones,dc):
     ones = [int(i) for i in ones.strip().replace(',',' ').split()]
     dc = [int(i) for i in dc.strip().replace(',',' ').split()]
-    _,primes = function.simplify(ones, dc)[1]  
+    _,primes = function.simplify(ones, dc)  
     expression = function.get_function(primes)
     primes = ",".join("(%s,%s)" % tup for tup in primes)
     print expression
@@ -141,7 +141,7 @@ def passValues(function,ones,dc):
 def DpassValues(function,ones,dc):
     ones = [int(i) for i in ones.strip().replace(',',' ').split()]
     dc = [int(i) for i in dc.strip().replace(',',' ').split()]
-    primes,_ = function.simplify(ones, dc)[1]  
+    primes,_ = function.simplify(ones, dc)  
     covers = function.possible_covers(list(primes),ones)
     return primes,covers
 
