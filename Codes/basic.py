@@ -37,7 +37,6 @@ class QuineMcCluskey:
 			self.n_bits = 1
 		# Generate the sets of ones and dontcares
 		ones = set(self.__num2str(i) for i in ones)
-		print(ones)
 		dc = set(self.__num2str(i) for i in dc)
 
 		return self.minimize_los(ones, dc)
@@ -57,7 +56,6 @@ class QuineMcCluskey:
 			return None
 		# First step of Quine-McCluskey method : prime implicants
 		prime_implicants = self.__find_PI(term_mins)
-		#print(prime_implicants)
 		# Convert prime implicants to a proper form (value+mask)
 		prime_implicants = self.__get_prime_tuples(prime_implicants)
 		# Second step of Quine McCluskey method : prime implicant chart and Petrick's Method.
@@ -75,15 +73,10 @@ class QuineMcCluskey:
 
 	def possible_covers(self, primes, ones):
 		"""
-		Use the prime implicants to find the essential prime implicants of the
-		function, as well as other prime implicants that are necessary to cover
-		the function. This method uses the Petrick's method, which is a technique
-		for determining all minimum sum-of-products solutions from a prime implicant
-		chart.
+		Use the prime implicants to find the exhastive covers
+		the function.
 
 		primes: the prime implicants that we want to minimize.
-		ones: a list of indices for the minterm_mins for which we want the function to
-		evaluate to 1.
 		"""
 		if type(ones[0]) is int:
 			ones = set(self.__num2str(i) for i in ones)
@@ -98,6 +91,8 @@ class QuineMcCluskey:
 		covers = []
 		if len(chart) > 0:
 			covers = [set([i]) for i in chart[0]]
+
+		#this loop gets a list of the covers that can be used to represent the function
 		for i in xrange(1,len(chart)):
 			new_covers = []
 			for cover in covers:
@@ -116,7 +111,7 @@ class QuineMcCluskey:
 		return covers
 
 	def __petricks_method(self, primes, ones):
-		"""Find the essential prime implicants"""
+		"""Find the essential prime implicants reusing the cover function written above"""
 
 		chart = []
 		for one in ones:
@@ -129,6 +124,8 @@ class QuineMcCluskey:
 		covers = []
 		if len(chart) > 0:
 			covers = [set([i]) for i in chart[0]]
+
+		#this loop iterates over the covers and applies the petrick's method to them
 		for i in xrange(1,len(chart)):
 			new_covers = []
 			for cover in covers:
@@ -144,8 +141,10 @@ class QuineMcCluskey:
 					if append:
 						new_covers.append(x)
 			covers = new_covers
-		print('Covers:',covers)
-		print('--------------------------------------------------------')
+		#print('Covers:',covers)
+		#print('--------------------------------------------------------')
+		#now we have to find the most efficient cover among the ones we've found
+		# The idea is to find the min cover adhering to the standard cost rules
 		min_cost = 99999999
 		for cover in covers:
 			primes_in_cover = [primes[prime_index] for prime_index in cover]
@@ -158,6 +157,7 @@ class QuineMcCluskey:
 	
 	def calculate_cost(self, minterm_mins):
 		"""
+		Calculates cost of the given cover of the function.
 		A NOT gate adds 1 to the cost.
 		AND or OR gate adds 2 to the cost.
 		"""
@@ -181,7 +181,6 @@ class QuineMcCluskey:
 		"""
 		n_groups = self.n_bits + 1
 		marked = set()
-		#print(term_mins)
 		# Group term_mins into the list groups.
 		groups = [set() for i in range(n_groups)]
 		for t in term_mins:
@@ -231,9 +230,7 @@ class QuineMcCluskey:
 		return pi
 
 	def readable_format(self, minterm_mins):
-		"""
-		function in readable form given the essential prime implicants as the inputs
-		"""
+		"""function in readable form given the essential prime implicants as the inputs"""
 
 		if isinstance(minterm_mins,str):
 			return minterm_mins
@@ -253,7 +250,7 @@ class QuineMcCluskey:
 				elif not minterm[1] & 1<<j:
 					and_term_mins.append('%s\'' % self.variables[j])
 			or_term_mins.append(parentheses('.', and_term_mins))
-		return parentheses('+', or_term_mins)
+		return parentheses(' + ', or_term_mins)
 
 def no_of_bits(i):
 	""" Count set bits of the input. """

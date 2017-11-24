@@ -1,6 +1,7 @@
 import enaml
 from basic import *
 from enaml.qt.qt_application import QtApplication
+from subprocess import call
 
 
 qm = QuineMcCluskey([])

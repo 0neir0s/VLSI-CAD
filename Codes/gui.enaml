@@ -142,5 +142,3 @@ def DpassValues(function,ones,dc):
     primes,_ = function.minimize(ones, dc)  
     covers = function.possible_covers(list(primes),ones)
     return primes,covers
-
-
