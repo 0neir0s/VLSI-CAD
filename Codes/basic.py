@@ -114,6 +114,7 @@ class QuineMcCluskey:
 		"""Find the essential prime implicants reusing the cover function written above"""
 
 		chart = []
+		print(primes)
 		for one in ones:
 			column = []
 			for i in xrange(len(primes)):
@@ -124,7 +125,6 @@ class QuineMcCluskey:
 		covers = []
 		if len(chart) > 0:
 			covers = [set([i]) for i in chart[0]]
-
 		#this loop iterates over the covers and applies the petrick's method to them
 		for i in xrange(1,len(chart)):
 			new_covers = []
@@ -141,9 +141,9 @@ class QuineMcCluskey:
 					if append:
 						new_covers.append(x)
 			covers = new_covers
-		#print('Covers:',covers)
-		#print('--------------------------------------------------------')
-		#now we have to find the most efficient cover among the ones we've found
+			#print('Covers:',covers)
+			#print('--------------------------------------------------------')
+		# Now we have to find the most efficient cover among the ones we've found
 		# The idea is to find the min cover adhering to the standard cost rules
 		min_cost = 99999999
 		for cover in covers:
