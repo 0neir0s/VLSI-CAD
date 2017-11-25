@@ -126,10 +126,12 @@ class QuineMcCluskey:
 		if len(chart) > 0:
 			covers = [set([i]) for i in chart[0]]
 		#this loop iterates over the covers and applies the petrick's method to them
+		print(chart)
 		for i in xrange(1,len(chart)):
 			new_covers = []
 			for cover in covers:
 				for prime_index in chart[i]:
+					print(chart[i])
 					x = set(cover)
 					x.add(prime_index)
 					append = True
@@ -141,8 +143,8 @@ class QuineMcCluskey:
 					if append:
 						new_covers.append(x)
 			covers = new_covers
-			#print('Covers:',covers)
-			#print('--------------------------------------------------------')
+			print('Covers:',covers)
+			print('--------------------------------------------------------')
 		# Now we have to find the most efficient cover among the ones we've found
 		# The idea is to find the min cover adhering to the standard cost rules
 		min_cost = 99999999
